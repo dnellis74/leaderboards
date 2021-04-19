@@ -5,9 +5,9 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class Player {
+public class PlayerDto {
     private String id;
     private String steamId;
     private String username;
-    List<Accolade> accolades;
+    List<AccoladeDto> accoladeDtos;
 }
