@@ -20,6 +20,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation group: 'org.springdoc', name: 'springdoc-openapi-ui', version: '1.5.7'
     implementation 'org.postgresql:postgresql'
+    implementation 'com.google.code.gson:gson:2.8.6'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 

@@ -2,8 +2,15 @@ package com.winterbear.rangeishot.leaderboard;
 
 import com.winterbear.rangeishot.leaderboard.web.PlayerDto;
 import com.winterbear.rangeishot.leaderboard.web.TournamentDto;
+import com.winterbear.rangeishot.leaderboard.web.TournamentSubmitScoreDto;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.websocket.server.PathParam;
 import java.util.List;
@@ -35,12 +42,15 @@ public class LeaderboardController {
     }
 
     @GetMapping("/tournament/{tournamentId}")
-    public TournamentDto getTournament(@PathParam("tournamentId") String tournamentId) {
+    public TournamentDto getTournament(@PathVariable("tournamentId") String tournamentId) {
         return null;
     }
 
     @PostMapping("/tournament/{tournamentId}")
-    public TournamentDto submitScore(@RequestBody int score, @PathParam("tournamentId") String tournamentId) {
-        return null;
+    public ResponseEntity<TournamentDto> submitScore(@RequestHeader("ticket") String ticket,
+                                                     @PathVariable("tournamentId") String tournamentId,
+                                                     @RequestBody TournamentSubmitScoreDto tournamentSubmitScoreDto) {
+        TournamentDto tournamentDto = leaderboardService.submitScore(ticket, tournamentId, tournamentSubmitScoreDto);
+        return ResponseEntity.ok(tournamentDto);
     }
 }
