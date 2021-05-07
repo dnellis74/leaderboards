@@ -2,15 +2,15 @@ package com.winterbear.rangeishot.leaderboard;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.winterbear.rangeishot.leaderboard.repo.entity.ScoreId;
 import com.winterbear.rangeishot.leaderboard.repo.ScoreRepo;
-import com.winterbear.rangeishot.leaderboard.repo.entity.Tournament;
 import com.winterbear.rangeishot.leaderboard.repo.TournamentRepo;
 import com.winterbear.rangeishot.leaderboard.repo.entity.Score;
+import com.winterbear.rangeishot.leaderboard.repo.entity.Tournament;
 import com.winterbear.rangeishot.leaderboard.steam.ApiResponse;
 import com.winterbear.rangeishot.leaderboard.web.TournamentDto;
 import com.winterbear.rangeishot.leaderboard.web.TournamentScoreDto;
 import com.winterbear.rangeishot.leaderboard.web.TournamentSubmitScoreDto;
+import org.apache.commons.lang3.stream.Streams;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -18,7 +18,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -48,18 +47,22 @@ public class LeaderboardService {
 
     public TournamentDto createTournament(TournamentDto tournamentDto) {
         Tournament tournament = from(tournamentDto);
-        Tournament resultEntity= tournamentRepo.save(tournament);
+        Tournament resultEntity = tournamentRepo.save(tournament);
         TournamentDto resultDto = from(resultEntity);
         resultDto.setSuccess(true);
         return resultDto;
     }
 
     public List<TournamentDto> getTournaments() {
-        ;
         List<Tournament> tournaments = tournamentRepo.findAll();
         return tournaments.stream()
                 .map(p -> from(p))
                 .collect(Collectors.toList());
+    }
+
+    public TournamentDto getTournament(String tournamentId) {
+        Optional<Tournament> tournament = tournamentRepo.findById(tournamentId);
+        return from(tournament.get());
     }
 
     private Tournament from(TournamentDto tournamentDto) {
@@ -69,14 +72,31 @@ public class LeaderboardService {
     }
 
     private TournamentDto from(Tournament tournament) {
-        return TournamentDto.builder()
+        TournamentDto result = TournamentDto.builder()
                 .id(tournament.getId())
                 .name(tournament.getName())
+                .build();
+        if (tournament.getScores() != null) {
+            List<TournamentScoreDto> scoreList = Streams.stream(tournament.getScores())
+                    .map(s -> from(s))
+                    .collect(Collectors.toList());
+            result.setScores(scoreList);
+        }
+        return result;
+    }
+
+    private TournamentScoreDto from(Score s) {
+        return TournamentScoreDto.builder()
+                .scores(s.getCourseScores())
+                .totalScore(s.getTotalScore())
+                .playerId(s.getPlayerId())
                 .build();
     }
 
     public TournamentDto submitScore(String ticket, String tournamentId, TournamentSubmitScoreDto tournamentSubmitScoreDto) {
         Gson gson = new Gson();
+
+        // Validate user ticket
         try {
             verifyId(ticket);
         } catch (RuntimeException e) {
@@ -88,19 +108,21 @@ public class LeaderboardService {
 
         Tournament tournament = new Tournament();
         tournament.setId(Integer.valueOf(tournamentId));
+
         Optional<Score> score = scoreRepo.findByPlayerId_AndTournament(tournamentSubmitScoreDto.getPlayerId(), tournament);
         Integer[] scoreArray;
         if (score.isPresent()) {
             scoreArray = gson.fromJson(score.get().getCourseScores(), new TypeToken<Integer[]>() {
             }.getType());
         } else {
+            //TODO How to properly initialize tournament numCourses
             scoreArray = new Integer[3];
             score = Optional.of(Score.builder()
                     .playerId(tournamentSubmitScoreDto.getPlayerId())
                     .tournament(tournament)
                     .build());
         }
-        scoreArray[tournamentSubmitScoreDto.getCourse()-1] = tournamentSubmitScoreDto.getScore();
+        scoreArray[tournamentSubmitScoreDto.getCourse() - 1] = tournamentSubmitScoreDto.getScore();
         int total = Arrays.stream(scoreArray)
                 .filter(p -> Objects.nonNull(p))
                 .mapToInt(Integer::intValue)
@@ -128,7 +150,7 @@ public class LeaderboardService {
         ApiResponse apiResponse = responseEntity.getBody();
         if (responseEntity.getStatusCode() != HttpStatus.OK
                 || apiResponse.getResponse().getError() != null) {
-            //throw new RuntimeException(apiResponse.getResponse().getError().getErrordesc());
+            // throw new RuntimeException(apiResponse.getResponse().getError().getErrordesc());
         }
         return true;
     }

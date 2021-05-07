@@ -11,8 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class TournamentScoreDto {
-    private ScoreId scoreId;
-
+    private String playerId;
     private String scores;
     private int totalScore;
 }

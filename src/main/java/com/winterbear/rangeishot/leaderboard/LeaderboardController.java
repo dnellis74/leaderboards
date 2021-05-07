@@ -12,9 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.websocket.server.PathParam;
 import java.util.List;
-
 
 @RestController
 public class LeaderboardController {
@@ -43,7 +41,7 @@ public class LeaderboardController {
 
     @GetMapping("/tournament/{tournamentId}")
     public TournamentDto getTournament(@PathVariable("tournamentId") String tournamentId) {
-        return null;
+        return leaderboardService.getTournament(tournamentId);
     }
 
     @PostMapping("/tournament/{tournamentId}")
