@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface TournamentRepo extends JpaRepository<Tournament, String> {
+public interface TournamentRepo extends JpaRepository<Tournament, Integer> {
     // Spring Data generates this class at runtime
 
 

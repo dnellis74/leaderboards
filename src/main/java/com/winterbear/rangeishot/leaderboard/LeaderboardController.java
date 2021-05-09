@@ -2,6 +2,7 @@ package com.winterbear.rangeishot.leaderboard;
 
 import com.winterbear.rangeishot.leaderboard.web.PlayerDto;
 import com.winterbear.rangeishot.leaderboard.web.TournamentDto;
+import com.winterbear.rangeishot.leaderboard.web.TournamentScoreDto;
 import com.winterbear.rangeishot.leaderboard.web.TournamentSubmitScoreDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -34,13 +36,18 @@ public class LeaderboardController {
         return leaderboardService.getTournaments();
     }
 
+    @GetMapping("/scores")
+    public List<TournamentScoreDto> getActiveTournaments(@RequestParam("tournament") Integer tournamentId) {
+        return leaderboardService.getScoresByTournament(tournamentId);
+    }
+
     @PostMapping("/tournament")
     public TournamentDto createTournament(@RequestBody TournamentDto tournamentDto) {
         return leaderboardService.createTournament(tournamentDto);
     }
 
     @GetMapping("/tournament/{tournamentId}")
-    public TournamentDto getTournament(@PathVariable("tournamentId") String tournamentId) {
+    public TournamentDto getTournament(@PathVariable("tournamentId") Integer tournamentId) {
         return leaderboardService.getTournament(tournamentId);
     }
 

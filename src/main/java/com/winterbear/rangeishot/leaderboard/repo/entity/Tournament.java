@@ -13,6 +13,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
 import java.util.Date;
 import java.util.List;
 
@@ -34,6 +35,7 @@ public class Tournament {
     private String numCourses;
     private String courses;
 
-    @OneToMany(mappedBy="tournament")
+    @OneToMany(mappedBy="tournament", fetch = FetchType.LAZY)
+    @OrderBy("totalScore")
     private List<Score> scores;
 }

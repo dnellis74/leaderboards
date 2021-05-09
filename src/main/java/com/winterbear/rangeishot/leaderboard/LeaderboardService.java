@@ -10,7 +10,6 @@ import com.winterbear.rangeishot.leaderboard.steam.ApiResponse;
 import com.winterbear.rangeishot.leaderboard.web.TournamentDto;
 import com.winterbear.rangeishot.leaderboard.web.TournamentScoreDto;
 import com.winterbear.rangeishot.leaderboard.web.TournamentSubmitScoreDto;
-import org.apache.commons.lang3.stream.Streams;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -36,8 +35,11 @@ public class LeaderboardService {
     @Value("${com.winterbear.publisherkey}")
     String publisherKey;
 
-    @Value("${com.winterbear.appid}")
+    @Value("${com.winterbear.appid:1503590}")
     String appId;
+
+    @Value("${com.winterbear.validation.ticket:true}")
+    Boolean ticketValidation;
 
     @Autowired
     public LeaderboardService(TournamentRepo tournamentRepo, ScoreRepo scoreRepo) {
@@ -60,7 +62,7 @@ public class LeaderboardService {
                 .collect(Collectors.toList());
     }
 
-    public TournamentDto getTournament(String tournamentId) {
+    public TournamentDto getTournament(Integer tournamentId) {
         Optional<Tournament> tournament = tournamentRepo.findById(tournamentId);
         return from(tournament.get());
     }
@@ -77,7 +79,9 @@ public class LeaderboardService {
                 .name(tournament.getName())
                 .build();
         if (tournament.getScores() != null) {
-            List<TournamentScoreDto> scoreList = Streams.stream(tournament.getScores())
+            List<TournamentScoreDto> scoreList = tournament.getScores().stream()
+                    // Not sure how this works with a steam and hibernate collections
+                    .limit(3)
                     .map(s -> from(s))
                     .collect(Collectors.toList());
             result.setScores(scoreList);
@@ -144,14 +148,25 @@ public class LeaderboardService {
     }
 
     private boolean verifyId(String ticket) {
-        String urlString = String.format(AUTHENTICATE_USER_TICKET, publisherKey, appId, ticket);
-        RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<ApiResponse> responseEntity = restTemplate.getForEntity(urlString, ApiResponse.class);
-        ApiResponse apiResponse = responseEntity.getBody();
-        if (responseEntity.getStatusCode() != HttpStatus.OK
-                || apiResponse.getResponse().getError() != null) {
-            // throw new RuntimeException(apiResponse.getResponse().getError().getErrordesc());
+        if (ticketValidation) {
+            String urlString = String.format(AUTHENTICATE_USER_TICKET, publisherKey, appId, ticket);
+            RestTemplate restTemplate = new RestTemplate();
+            ResponseEntity<ApiResponse> responseEntity = restTemplate.getForEntity(urlString, ApiResponse.class);
+            ApiResponse apiResponse = responseEntity.getBody();
+            if (responseEntity.getStatusCode() != HttpStatus.OK
+                    || apiResponse.getResponse().getError() != null) {
+                throw new RuntimeException(apiResponse.getResponse().getError().getErrordesc());
+            }
         }
         return true;
+    }
+
+    public List<TournamentScoreDto> getScoresByTournament(Integer tournamentId) {
+        Tournament tournament = new Tournament();
+        tournament.setId(Integer.valueOf(tournamentId));
+        List<Score> byTournament = scoreRepo.findByTournamentOrderByTotalScore(tournament);
+        return byTournament.stream()
+                .map(p -> from(p))
+                .collect(Collectors.toList());
     }
 }

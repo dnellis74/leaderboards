@@ -39,7 +39,7 @@ public class Score {
 
     private String playerId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Tournament tournament;
 
     private String courseScores;

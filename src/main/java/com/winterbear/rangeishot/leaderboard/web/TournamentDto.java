@@ -3,6 +3,7 @@ package com.winterbear.rangeishot.leaderboard.web;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.Singular;
 
@@ -13,6 +14,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 public class TournamentDto extends LeaderboardDto {
     private int id;
     private Date start;
