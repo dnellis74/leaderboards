@@ -10,6 +10,7 @@ import com.winterbear.rangeishot.leaderboard.steam.ApiResponse;
 import com.winterbear.rangeishot.leaderboard.web.TournamentDto;
 import com.winterbear.rangeishot.leaderboard.web.TournamentScoreDto;
 import com.winterbear.rangeishot.leaderboard.web.TournamentSubmitScoreDto;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -19,14 +20,13 @@ import org.springframework.web.client.RestTemplate;
 
 import java.text.ParseException;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@Log4j2
 public class LeaderboardService {
 
     public static final String AUTHENTICATE_USER_TICKET = "https://partner.steam-api.com/ISteamUserAuth/AuthenticateUserTicket/v1/?key=%s&appid=%s&ticket=%s";
@@ -44,6 +44,8 @@ public class LeaderboardService {
 
     @Value("${com.winterbear.validation.ticket:true}")
     Boolean ticketValidation;
+
+    private final Gson gson = new Gson();
 
     @Autowired
     public LeaderboardService(TournamentRepo tournamentRepo, ScoreRepo scoreRepo) {
@@ -74,25 +76,27 @@ public class LeaderboardService {
     private Tournament from(TournamentDto tournamentDto) throws ParseException {
         LocalDate endDate = LocalDate.parse(tournamentDto.getClose());
         LocalDate startDate = LocalDate.parse(tournamentDto.getOpen());
+        String courseNames = tournamentDto.getCourses().stream()
+                .collect(Collectors.joining(","));
 
         return Tournament.builder()
                 .close(endDate)
-                .courses(tournamentDto.getCourses())
+                .courses(courseNames)
                 .description(tournamentDto.getDescription())
                 .name(tournamentDto.getName())
-                .numCourses(tournamentDto.getNumCourses())
+                .numCourses(tournamentDto.getCourses().size())
                 .open(startDate)
                 .thumbnailPath(tournamentDto.getThumbnailPath())
                 .build();
     }
 
     private TournamentDto from(Tournament tournament) {
+        List<String> courseNames = Arrays.asList(tournament.getCourses().split(","));
         TournamentDto result = TournamentDto.builder()
                 .id(tournament.getId())
-                .courses(tournament.getCourses())
+                .courses(courseNames)
                 .open(tournament.getOpen().toString())
                 .close(tournament.getClose().toString())
-                .numCourses(tournament.getNumCourses())
                 .description(tournament.getDescription())
                 .name(tournament.getName())
                 .thumbnailPath(tournament.getThumbnailPath())
@@ -109,16 +113,24 @@ public class LeaderboardService {
     }
 
     private TournamentScoreDto from(Score s) {
+        List<Integer> scores = getListIntegers(getPArray(s.getCourseScores()));
         return TournamentScoreDto.builder()
-                .scores(s.getCourseScores())
+                .scores(scores)
                 .totalScore(s.getTotalScore())
                 .playerId(s.getPlayerId())
                 .build();
     }
 
-    public TournamentScoreDto submitScore(String ticket, int tournamentId, TournamentSubmitScoreDto tournamentSubmitScoreDto) {
-        Gson gson = new Gson();
+    private int[] getPArray(String stringIntArray) {
+        return gson.fromJson(stringIntArray, new TypeToken<int[]>() {
+        }.getType());
+    }
 
+    private List<Integer> getListIntegers(int[] arrayInt) {
+        return Arrays.stream(arrayInt).boxed().collect(Collectors.toList());
+    }
+
+    public TournamentScoreDto submitScore(String ticket, int tournamentId, TournamentSubmitScoreDto tournamentSubmitScoreDto) {
         // Validate user ticket
         try {
             verifyId(ticket);
@@ -129,17 +141,15 @@ public class LeaderboardService {
             throw new RuntimeException(result.getMessage());
         }
 
-        Tournament tournament1 = new Tournament();
-        tournament1.setId(Integer.valueOf(tournamentId));
-
-        Optional<Score> score = scoreRepo.findByPlayerId_AndTournament(tournamentSubmitScoreDto.getPlayerId(), tournament1);
+        Tournament tournamentFilter = new Tournament();
+        tournamentFilter.setId(Integer.valueOf(tournamentId));
+        Optional<Score> score = scoreRepo.findByPlayerId_AndTournament(tournamentSubmitScoreDto.getPlayerId(), tournamentFilter);
 
         int[] scoreArray;
         if (score.isPresent()) {
             scoreArray = gson.fromJson(score.get().getCourseScores(), new TypeToken<int[]>() {
             }.getType());
         } else {
-            //TODO How to properly initialize tournament numCourses
             Optional<Tournament> tournament = tournamentRepo.findById(tournamentId);
             scoreArray = new int[tournament.get().getNumCourses()];
             score = Optional.of(Score.builder()
@@ -155,23 +165,26 @@ public class LeaderboardService {
         score.get().setTotalScore(total);
         scoreRepo.saveAndFlush(score.get());
 
+        List<Integer> scoreList = Arrays.stream(scoreArray).boxed().collect(Collectors.toList());
         TournamentScoreDto tournamentScoreDto = TournamentScoreDto.builder()
                 .playerId(tournamentSubmitScoreDto.getPlayerId())
-                .scores(scoresString)
+                .scores(scoreList)
                 .totalScore(total)
                 .build();
         return tournamentScoreDto;
     }
 
     private boolean verifyId(String ticket) {
-        if (ticketValidation) {
-            String urlString = String.format(AUTHENTICATE_USER_TICKET, publisherKey, appId, ticket);
-            RestTemplate restTemplate = new RestTemplate();
-            ResponseEntity<ApiResponse> responseEntity = restTemplate.getForEntity(urlString, ApiResponse.class);
-            ApiResponse apiResponse = responseEntity.getBody();
-            if (responseEntity.getStatusCode() != HttpStatus.OK
-                    || apiResponse.getResponse().getError() != null) {
+        String urlString = String.format(AUTHENTICATE_USER_TICKET, publisherKey, appId, ticket);
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<ApiResponse> responseEntity = restTemplate.getForEntity(urlString, ApiResponse.class);
+        ApiResponse apiResponse = responseEntity.getBody();
+        if (responseEntity.getStatusCode() != HttpStatus.OK
+                || apiResponse.getResponse().getError() != null) {
+            if (ticketValidation) {
                 throw new RuntimeException(apiResponse.getResponse().getError().getErrordesc());
+            } else {
+                log.warn("Ticket header validation failed for {}\n{}", ticket, apiResponse.getResponse().getError().getErrordesc());
             }
         }
         return true;

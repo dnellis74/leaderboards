@@ -22,8 +22,7 @@ public class TournamentDto extends LeaderboardDto {
     private String thumbnailPath;
     private String name;
     private String description;
-    private Integer numCourses;
-    private String courses;
+    private List<String> courses;
     @Singular
     private List<TournamentScoreDto> scores;
 }

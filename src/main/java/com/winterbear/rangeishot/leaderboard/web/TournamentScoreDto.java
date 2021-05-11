@@ -6,12 +6,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class TournamentScoreDto {
     private String playerId;
-    private String scores;
+    private List<Integer> scores;
     private int totalScore;
 }
