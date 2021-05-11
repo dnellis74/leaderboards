@@ -17,13 +17,13 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 public class TournamentDto extends LeaderboardDto {
     private int id;
-    private Date start;
-    private Date end;
+    private String open;
+    private String close;
     private String thumbnailPath;
     private String name;
     private String description;
-    @Singular
-    private List<String> courses;
+    private Integer numCourses;
+    private String courses;
     @Singular
     private List<TournamentScoreDto> scores;
 }

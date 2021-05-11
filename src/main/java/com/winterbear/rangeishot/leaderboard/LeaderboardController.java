@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.text.ParseException;
 import java.util.List;
 
 @RestController
@@ -42,7 +43,7 @@ public class LeaderboardController {
     }
 
     @PostMapping("/tournament")
-    public TournamentDto createTournament(@RequestBody TournamentDto tournamentDto) {
+    public TournamentDto createTournament(@RequestBody TournamentDto tournamentDto) throws ParseException {
         return leaderboardService.createTournament(tournamentDto);
     }
 
@@ -52,10 +53,10 @@ public class LeaderboardController {
     }
 
     @PostMapping("/tournament/{tournamentId}")
-    public ResponseEntity<TournamentDto> submitScore(@RequestHeader("ticket") String ticket,
-                                                     @PathVariable("tournamentId") String tournamentId,
+    public ResponseEntity<TournamentScoreDto> submitScore(@RequestHeader("ticket") String ticket,
+                                                     @PathVariable("tournamentId") int tournamentId,
                                                      @RequestBody TournamentSubmitScoreDto tournamentSubmitScoreDto) {
-        TournamentDto tournamentDto = leaderboardService.submitScore(ticket, tournamentId, tournamentSubmitScoreDto);
-        return ResponseEntity.ok(tournamentDto);
+        TournamentScoreDto tournamentScoreDto = leaderboardService.submitScore(ticket, tournamentId, tournamentSubmitScoreDto);
+        return ResponseEntity.ok(tournamentScoreDto);
     }
 }
