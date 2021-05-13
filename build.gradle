@@ -16,9 +16,9 @@ repositories {
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.projectlombok:lombok:1.18.18'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation group: 'org.springdoc', name: 'springdoc-openapi-ui', version: '1.5.7'
+    implementation 'org.springdoc:springdoc-openapi-ui:1.5.8'
+    implementation 'org.projectlombok:lombok:1.18.18'
     implementation 'org.postgresql:postgresql'
     implementation 'com.google.code.gson:gson:2.8.6'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

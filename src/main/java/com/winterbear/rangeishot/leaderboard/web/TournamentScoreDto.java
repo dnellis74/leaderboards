@@ -14,6 +14,7 @@ import java.util.List;
 @Builder
 public class TournamentScoreDto {
     private String playerId;
+    private String playerName;
     private List<Integer> scores;
     private int totalScore;
 }

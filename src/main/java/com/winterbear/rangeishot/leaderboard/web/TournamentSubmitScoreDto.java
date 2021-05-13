@@ -9,6 +9,7 @@ import java.util.List;
 @Builder
 public class TournamentSubmitScoreDto {
     private String playerId;
+    private String playerName;
     private int course;
     private int score;
 }

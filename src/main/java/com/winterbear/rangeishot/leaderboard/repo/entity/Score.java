@@ -39,6 +39,8 @@ public class Score {
 
     private String playerId;
 
+    private String playerName;
+
     @ManyToOne(fetch = FetchType.LAZY)
     private Tournament tournament;
 

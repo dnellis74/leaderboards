@@ -103,6 +103,7 @@ public class LeaderboardService {
                 .build();
         if (tournament.getScores() != null) {
             List<TournamentScoreDto> scoreList = tournament.getScores().stream()
+                    .filter(x -> x.getTotalScore() != 0)
                     // Not sure how this works with a steam and hibernate collections
                     .limit(DEFAULT_TOP_SCORES)
                     .map(s -> from(s))
@@ -118,6 +119,7 @@ public class LeaderboardService {
                 .scores(scores)
                 .totalScore(s.getTotalScore())
                 .playerId(s.getPlayerId())
+                .playerName(s.getPlayerName())
                 .build();
     }
 
@@ -154,12 +156,16 @@ public class LeaderboardService {
             scoreArray = new int[tournament.get().getNumCourses()];
             score = Optional.of(Score.builder()
                     .playerId(tournamentSubmitScoreDto.getPlayerId())
+                    .playerName(tournamentSubmitScoreDto.getPlayerName())
                     .tournament(tournament.get())
                     .build());
         }
         scoreArray[tournamentSubmitScoreDto.getCourse() - 1] = tournamentSubmitScoreDto.getScore();
-        int total = Arrays.stream(scoreArray)
-                .sum();
+        int total = 0;
+        if (score.get().getTotalScore() != 0 || !Arrays.stream(scoreArray).anyMatch(x -> x == 0)) {
+            total = Arrays.stream(scoreArray).sum();
+        }
+
         String scoresString = gson.toJson(scoreArray);
         score.get().setCourseScores(scoresString);
         score.get().setTotalScore(total);
@@ -168,6 +174,7 @@ public class LeaderboardService {
         List<Integer> scoreList = Arrays.stream(scoreArray).boxed().collect(Collectors.toList());
         TournamentScoreDto tournamentScoreDto = TournamentScoreDto.builder()
                 .playerId(tournamentSubmitScoreDto.getPlayerId())
+                .playerName(tournamentSubmitScoreDto.getPlayerName())
                 .scores(scoreList)
                 .totalScore(total)
                 .build();
