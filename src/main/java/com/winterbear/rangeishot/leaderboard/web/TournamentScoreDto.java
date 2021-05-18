@@ -1,6 +1,5 @@
 package com.winterbear.rangeishot.leaderboard.web;
 
-import com.winterbear.rangeishot.leaderboard.repo.entity.ScoreId;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

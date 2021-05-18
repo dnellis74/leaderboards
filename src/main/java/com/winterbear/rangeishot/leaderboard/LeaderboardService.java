@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 public class LeaderboardService {
 
     public static final String AUTHENTICATE_USER_TICKET = "https://partner.steam-api.com/ISteamUserAuth/AuthenticateUserTicket/v1/?key=%s&appid=%s&ticket=%s";
-    public static final int DEFAULT_TOP_SCORES = 3;
+    public static final int DEFAULT_TOP_SCORES = 50;
 
     private TournamentRepo tournamentRepo;
 
