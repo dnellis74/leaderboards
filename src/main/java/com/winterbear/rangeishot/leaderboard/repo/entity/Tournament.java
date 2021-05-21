@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -29,6 +30,8 @@ public class Tournament {
     private LocalDate close;
     private String thumbnailPath;
     private String name;
+
+    @Column(columnDefinition="TEXT")
     private String description;
     private Integer numCourses;
     private String courses;
